@@ -129,6 +129,13 @@ class BasicEnsemble(Ensemble):
         )
         return self._forward_from_indices(x, model_indices)
 
+    def _forward_worst_model(
+            self, x: torch.Tensor, _worst_model_indices: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        pass
+        # batch_size = len(x)
+        # return self._forward_from_indices(x, _worst_model_indices)
+
     def _forward_expectation(
         self, x: torch.Tensor
     ) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -183,6 +190,13 @@ class BasicEnsemble(Ensemble):
             return self._forward_from_indices(x, self._propagation_indices)
         if self.propagation_method == "expectation":
             return self._forward_expectation(x)
+        if self.propagation_method == "worst_model":
+            assert (
+                    self._worst_model_indices is not None
+            ), "When using propagation='worst_model', " \
+               "`worst_model_indices` must be provided."
+            return self._forward_worst_model(x,
+                                             self._worst_model_indices)
         raise ValueError(
             f"Invalid propagation method {self.propagation_method}. Valid options are: "
             f"'random_model', 'fixed_model', 'expectation'."

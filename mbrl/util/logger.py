@@ -9,6 +9,8 @@ from typing import Counter, Dict, List, Mapping, Tuple, Union
 
 import termcolor
 import torch
+from torch.utils.tensorboard import SummaryWriter
+import os
 
 LogFormatType = List[Tuple[str, str, str]]
 LogTypes = Union[int, float, torch.Tensor]
@@ -49,6 +51,8 @@ class MetersGroup(object):
         self._meters: Dict[str, AverageMeter] = collections.defaultdict(AverageMeter)
         self._csv_file = open(self._csv_file_path, "w")
         self._csv_writer = None
+        self.tb_file_path = os.path.join(file_name, 'tb')
+        self._summary_writer = SummaryWriter(self.tb_file_path)
 
     @staticmethod
     def _prepare_file(prefix: Union[str, pathlib.Path], suffix: str) -> pathlib.Path:
@@ -89,6 +93,13 @@ class MetersGroup(object):
             pieces.append(self._format(disp_key, value, ty))
         print(" | ".join(pieces))
 
+    def _dump_to_sw(self, key, data_key, step: int):
+        # if self._summary_writer is None:
+        #     self._summary_writer = SummaryWriter(self.tb_file_path)
+        self._summary_writer.add_scalar(key, data_key, step)
+        # self._summary_writer.flush()
+        # self._summary_writer.close()
+
     def dump(self, step: int, prefix: str, save: bool = True, color: str = "yellow"):
         if len(self._meters) == 0:
             return
@@ -97,6 +108,8 @@ class MetersGroup(object):
             data["step"] = step
             self._dump_to_csv(data)
             self._dump_to_console(data, prefix, color)
+            for key in data.keys():
+                self._dump_to_sw(key, data[key], step)
         self._meters.clear()
 
 

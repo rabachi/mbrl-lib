@@ -285,7 +285,8 @@ class OneDTransitionRewardModel(Model):
 
         model_in = self._get_model_input_from_tensors(obs, actions)
         preds = self.model.sample(model_in, rng=rng, deterministic=deterministic)[0]
-        next_observs = preds[:, :-1] if self.learned_rewards else preds
+        next_observs = preds[..., :-1] if self.learned_rewards else \
+                preds
         if self.target_is_delta:
             tmp_ = next_observs + obs
             for dim in self.no_delta_list:
@@ -351,6 +352,10 @@ class OneDTransitionRewardModel(Model):
     def set_elite(self, elite_indices: Sequence[int]):
         self.elite_models = list(elite_indices)
         self.model.set_elite(elite_indices)
+
+    def set_worst(self, worst_indices: Sequence[int]):
+        self.worst_models = list(worst_indices)
+        self.model.set_worst(worst_indices)
 
     def __len__(self):
         return len(self.model)

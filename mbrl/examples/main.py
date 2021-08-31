@@ -9,6 +9,7 @@ import torch
 
 import mbrl.algorithms.mbpo as mbpo
 import mbrl.algorithms.pets as pets
+import mbrl.algorithms.robust_mbpo as robust_mbpo
 import mbrl.util.mujoco as mujoco_util
 
 
@@ -22,7 +23,9 @@ def run(cfg: omegaconf.DictConfig):
     if cfg.algorithm.name == "mbpo":
         test_env, *_ = mujoco_util.make_env(cfg)
         return mbpo.train(env, test_env, term_fn, cfg)
-
+    if cfg.algorithm.name == "robust_mbpo":
+        test_env, *_ = mujoco_util.make_env(cfg)
+        return robust_mbpo.train(env, test_env, term_fn, cfg)
 
 if __name__ == "__main__":
     run()

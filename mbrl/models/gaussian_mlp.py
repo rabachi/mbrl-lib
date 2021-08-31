@@ -121,6 +121,7 @@ class GaussianMLP(Ensemble):
         self.to(self.device)
 
         self.elite_models: List[int] = None
+        self.worst_models: List[int] = None
 
         self._propagation_indices: torch.Tensor = None
 
@@ -151,6 +152,9 @@ class GaussianMLP(Ensemble):
             logvar = self.min_logvar + F.softplus(logvar - self.min_logvar)
             return mean, logvar
 
+    def get_worst_model(self, x: torch.Tensor) -> int:
+        pass
+
     def _forward_from_indices(
         self, x: torch.Tensor, model_shuffle_indices: torch.Tensor
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
@@ -159,6 +163,7 @@ class GaussianMLP(Ensemble):
         num_models = (
             len(self.elite_models) if self.elite_models is not None else len(self)
         )
+
         shuffled_x = x[:, model_shuffle_indices, ...].view(
             num_models, batch_size // num_models, -1
         )
@@ -206,6 +211,10 @@ class GaussianMLP(Ensemble):
         if self.propagation_method == "expectation":
             mean, logvar = self._default_forward(x, only_elite=True)
             return mean.mean(dim=0), logvar.mean(dim=0)
+        if self.propagation_method == "worst_model":
+            # worst_propagation_indices = self.get_worst_model(x)
+            return self._forward_from_indices(x,
+                                              self.worst_models)
         raise ValueError(f"Invalid propagation method {self.propagation_method}.")
 
     def forward(  # type: ignore
@@ -385,6 +394,9 @@ class GaussianMLP(Ensemble):
     def set_elite(self, elite_indices: Sequence[int]):
         if len(elite_indices) != self.num_members:
             self.elite_models = list(elite_indices)
+
+    def set_worst(self, worst_indices: Sequence[int]):
+        self.worst_models = list(worst_indices)
 
     def save(self, path: Union[str, pathlib.Path]):
         """Saves the model to the given path."""
